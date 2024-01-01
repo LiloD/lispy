@@ -1,6 +1,6 @@
 target := lispy
 
-sources := mpc.c prompt.c
+sources := main.c mpc.c lispy.c
 
 links := -ledit
 
