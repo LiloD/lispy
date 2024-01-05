@@ -97,6 +97,9 @@ lval *lval_read(mpc_ast_t *t) {
   if (strstr(t->tag, "sexpr")) {
     x = lval_sexpr();
   }
+  if (strstr(t->tag, "qexpr")) {
+    x = lval_qexpr();
+  }
 
   // take care of children
   for (int i = 0; i < t->children_num; i++) {
@@ -104,6 +107,12 @@ lval *lval_read(mpc_ast_t *t) {
       continue;
     }
     if (strcmp(t->children[i]->contents, ")") == 0) {
+      continue;
+    }
+    if (strcmp(t->children[i]->contents, "{") == 0) {
+      continue;
+    }
+    if (strcmp(t->children[i]->contents, "}") == 0) {
       continue;
     }
     if (strcmp(t->children[i]->tag, "regex") == 0) {
@@ -115,25 +124,25 @@ lval *lval_read(mpc_ast_t *t) {
   return x;
 }
 
-lval *lval_pop(lval *sexpr, int idx) {
-  lval *v = sexpr->cell[idx];
+lval *lval_pop(lval *expr, int idx) {
+  lval *v = expr->cell[idx];
 
-  // shift the s-expr's memory of cell array
-  memmove(&sexpr->cell[idx], &sexpr->cell[idx + 1],
-          sizeof(lval *) * (sexpr->count - idx - 1));
+  // shift the expr's memory of cell array
+  memmove(&expr->cell[idx], &expr->cell[idx + 1],
+          sizeof(lval *) * (expr->count - idx - 1));
 
-  sexpr->count--;
+  expr->count--;
 
   // reallocate the memory
   // cause we moved before and the total count decreased by 1
-  sexpr->cell = realloc(sexpr->cell, sizeof(lval *) * sexpr->count);
+  expr->cell = realloc(expr->cell, sizeof(lval *) * expr->count);
 
   return v;
 }
 
-lval *lval_take(lval *sexpr, int idx) {
-  lval *v = lval_pop(sexpr, idx);
-  lval_del(sexpr);
+lval *lval_take(lval *expr, int idx) {
+  lval *v = lval_pop(expr, idx);
+  lval_del(expr);
   return v;
 }
 
@@ -170,9 +179,109 @@ lval *lval_eval_sexpr(lval *v) {
   }
 
   // the rest of children inside v is the arguments to op
-  lval *result = builtin_op(v, op->sym);
+  lval *result = builtin(v, op->sym);
   lval_del(op); // operator is useless now
   return result;
+}
+
+lval *builtin_eval(lval *a) {
+  LASSERT(a, a->count == 1,
+          "Function 'eval' passed too many arguments, should only take one");
+  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
+          "Function 'eval' passed incorrect type, should be a Q-Expression");
+
+  lval *v = lval_take(a, 0);
+  v->type = LVAL_SEXPR;
+  return lval_eval(v);
+}
+
+lval *lval_join(lval *x, lval *y) {
+  while (y->count) {
+    x = lval_add(x, lval_pop(y, 0));
+  }
+
+  lval_del(y);
+  return x;
+}
+
+lval *builtin_join(lval *v) {
+  for (int i = 0; i < v->count; i++) {
+    LASSERT(v, v->cell[i]->type == LVAL_QEXPR,
+            "Function 'join' passed incorrect type.");
+  }
+
+  lval *x = lval_pop(v, 0);
+
+  while (v->count) {
+    x = lval_join(x, lval_pop(v, 0));
+  }
+
+  lval_del(v);
+  return x;
+}
+
+lval *builtin_tail(lval *a) {
+  LASSERT(a, a->count == 1,
+          "Function 'tail' passed too many arguments, should only take one");
+  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
+          "Function 'tail' passed incorrect type, should be a Q-Expression");
+  LASSERT(a, a->cell[0]->count != 0,
+          "Function 'tail' passed invalid Q-Expression, should not be an empty "
+          "Q-Expression");
+
+  lval *v = lval_take(a, 0);
+
+  // only need to pop and delete first entry of the list
+  lval_del(lval_pop(v, 0));
+
+  return v;
+}
+
+lval *builtin_head(lval *a) {
+  LASSERT(a, a->count == 1,
+          "Function 'head' passed too many arguments, should only take one");
+  LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
+          "Function 'head' passed incorrect type, should be a Q-Expression");
+  LASSERT(a, a->cell[0]->count != 0,
+          "Function 'head' passed invalid Q-Expression, should not be an empty "
+          "Q-Expression");
+
+  lval *v = lval_take(a, 0);
+  while (v->count > 1) {
+    // keep pop the second entry of the list until we only have one left
+    lval_del(lval_pop(v, 1));
+  }
+
+  return v;
+}
+
+lval *builtin_list(lval *v) {
+  v->type = LVAL_QEXPR;
+  return v;
+};
+
+lval *builtin(lval *v, char *func) {
+  printf("builtin: func %s, value type %d\n", func, v->type);
+  if (strcmp("head", func) == 0) {
+    return builtin_head(v);
+  }
+  if (strcmp("tail", func) == 0) {
+    return builtin_tail(v);
+  }
+  if (strcmp("list", func) == 0) {
+    return builtin_list(v);
+  }
+  if (strcmp("join", func) == 0) {
+    return builtin_join(v);
+  }
+  if (strcmp("eval", func) == 0) {
+    return builtin_eval(v);
+  }
+  if (strstr("+-*/", func)) {
+    return builtin_op(v, func);
+  }
+
+  return lval_err("Unknow Function");
 }
 
 lval *builtin_op(lval *a, char *op) {
@@ -261,6 +370,14 @@ lval *lval_sexpr(void) {
   return v;
 }
 
+lval *lval_qexpr(void) {
+  lval *v = malloc(sizeof(lval));
+  v->type = LVAL_QEXPR;
+  v->count = 0;
+  v->cell = NULL;
+  return v;
+}
+
 void lval_del(lval *v) {
   switch (v->type) {
   case LVAL_NUM:
@@ -271,6 +388,7 @@ void lval_del(lval *v) {
   case LVAL_ERR:
     free(v->err);
     break;
+  case LVAL_QEXPR:
   case LVAL_SEXPR:
     for (int i = 0; i < v->count; i++) {
       lval_del(v->cell[i]);
@@ -307,6 +425,9 @@ void lval_print(lval *v) {
     break;
   case LVAL_SEXPR:
     lval_sexpr_print(v, '(', ')');
+    break;
+  case LVAL_QEXPR:
+    lval_sexpr_print(v, '{', '}');
     break;
   }
 }

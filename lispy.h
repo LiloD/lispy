@@ -2,6 +2,13 @@
 #define lispy_h
 #include "mpc.h"
 
+// if condition not met, give an error and delete the args
+#define LASSERT(args, cond, err)                                               \
+  if (!(cond)) {                                                               \
+    lval_del(args);                                                            \
+    return lval_err(err);                                                      \
+  }
+
 typedef struct traverse_stat {
   int num_of_nodes;
   int num_of_leaves;
@@ -26,21 +33,22 @@ enum {
   LVAL_ERR,
   LVAL_SYM,
   LVAL_SEXPR, // S-expr is a variable list of other values
+  LVAL_QEXPR,
 };
-
-// error type
-// enum {
-// LERR_DIV_ZERO,
-// LERR_BAD_OP,
-// LERR_BAD_NUM,
-//};
 
 traverse_stat bfs(mpc_ast_t *t);
 
 lval *lval_pop(lval *sexpr, int idx);
 lval *lval_take(lval *sexpr, int idx);
+lval *builtin(lval *v, char *op);
 lval *builtin_op(lval *v, char *op);
+lval *builtin_head(lval *v);
+lval *builtin_tail(lval *v);
+lval *builtin_join(lval *v);
+lval *builtin_list(lval *v);
+lval *builtin_eval(lval *v);
 lval *lval_eval(lval *v);
+lval *lval_join(lval *x, lval *y);
 lval *lval_eval_sexpr(lval *v);
 
 // read and construct
@@ -53,6 +61,7 @@ lval *lval_num(long x);
 lval *lval_err(char *e);
 lval *lval_sym(char *s);
 lval *lval_sexpr(void);
+lval *lval_qexpr(void);
 void lval_del(lval *v);
 
 // some utils
