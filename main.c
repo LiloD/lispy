@@ -31,8 +31,7 @@ int main(int argc, char **argv) {
 
   mpca_lang(MPCA_LANG_DEFAULT, " \
              number : /-?[0-9]+/; \
-             symbol : \"list\" | \"head\" | \"tail\"                \
-                    | \"join\" | \"eval\" | '+' | '-' | '*' | '/' ; \
+             symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/; \
              sexpr: '(' <expr>* ')' ; \
              qexpr: '{' <expr>* '}' ; \
              expr : <number> | <symbol> | <sexpr> | <qexpr>;\
@@ -42,6 +41,10 @@ int main(int argc, char **argv) {
 
   puts("Lispy version 0.0.1");
   puts("Press Ctrl+c to exit");
+
+  // init the env and add default builtins
+  lenv *e = lenv_new();
+  lenv_add_builtins(e);
 
   while (1) {
     char *input = readline("lispy> ");
@@ -69,7 +72,7 @@ int main(int argc, char **argv) {
 
       printf("value type:%d\n", v->type);
       printf("---------------------\n");
-      v = lval_eval(v);
+      v = lval_eval(e, v);
       lval_println(v);
       lval_del(v);
       mpc_ast_delete(r.output);

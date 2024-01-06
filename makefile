@@ -1,6 +1,6 @@
 target := lispy
 
-sources := main.c mpc.c lispy.c
+sources := main.c mpc.c lval.c lenv.c builtin.c
 
 links := -ledit
 
