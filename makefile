@@ -1,12 +1,12 @@
 target := lispy
 
-sources := main.c mpc.c lval.c lenv.c builtin.c
+sources := main.c mpc.c lval.c lenv.c builtin.c utils.c
 
 links := -ledit
 
 compiler := gcc
 
-flags := -Wall -std=c99 -o $(target)
+flags := -Wall -std=c99 -g -O0 -o $(target)
 
 all: $(target)
 

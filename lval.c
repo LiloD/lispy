@@ -1,5 +1,6 @@
 #include "lispy.h"
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -221,11 +222,19 @@ lval *lval_sym(char *s) {
   return v;
 }
 
-lval *lval_err(char *e) {
+lval *lval_err(char *fmt, ...) {
   lval *v = malloc(sizeof(lval));
   v->type = LVAL_ERR;
-  v->err = malloc(strlen(e) + 1);
-  strcpy(v->err, e);
+
+  va_list va;
+  va_start(va, fmt);
+
+  v->err = malloc(512);
+  vsnprintf(v->err, 511, fmt, va);
+
+  v->err = realloc(v->err, strlen(v->err) + 1);
+
+  va_end(va);
   return v;
 }
 
@@ -307,43 +316,4 @@ lval *lval_copy(lval *v) {
   }
 
   return x;
-}
-
-void lval_sexpr_print(lval *v, char open, char close) {
-  putchar(open);
-  for (int i = 0; i < v->count; i++) {
-    lval_print(v->cell[i]);
-    if (i != (v->count - 1)) {
-      putchar(' ');
-    }
-  }
-  putchar(close);
-}
-
-void lval_print(lval *v) {
-  switch (v->type) {
-  case LVAL_NUM:
-    printf("%li", v->num);
-    break;
-  case LVAL_ERR:
-    printf("error: %s", v->err);
-    break;
-  case LVAL_SYM:
-    printf("%s", v->sym);
-    break;
-  case LVAL_FUNC:
-    printf("<function>");
-    break;
-  case LVAL_SEXPR:
-    lval_sexpr_print(v, '(', ')');
-    break;
-  case LVAL_QEXPR:
-    lval_sexpr_print(v, '{', '}');
-    break;
-  }
-}
-
-void lval_println(lval *v) {
-  lval_print(v);
-  putchar('\n');
 }

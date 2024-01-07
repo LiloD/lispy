@@ -3,10 +3,11 @@
 #include "mpc.h"
 
 // if condition not met, give an error and delete the args
-#define LASSERT(args, cond, err)                                               \
+#define LASSERT(args, cond, fmt, ...)                                          \
   if (!(cond)) {                                                               \
+    lval *err = lval_err(fmt, ##__VA_ARGS__);                                  \
     lval_del(args);                                                            \
-    return lval_err(err);                                                      \
+    return err;                                                                \
   }
 
 typedef struct traverse_stat {
@@ -65,6 +66,7 @@ lval *builtin_tail(lenv *e, lval *v);
 lval *builtin_join(lenv *e, lval *v);
 lval *builtin_list(lenv *e, lval *v);
 lval *builtin_eval(lenv *e, lval *v);
+lval *builtin_def(lenv *e, lval *v);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);
@@ -81,7 +83,7 @@ lval *lval_read_sym(mpc_ast_t *t);
 lval *lval_add(lval *v, lval *x);
 
 lval *lval_num(long x);
-lval *lval_err(char *e);
+lval *lval_err(char *fmt, ...);
 lval *lval_sym(char *s);
 lval *lval_sexpr(void);
 lval *lval_qexpr(void);
@@ -100,5 +102,6 @@ void lenv_add_builtins(lenv *e);
 void lval_sexpr_print(lval *v, char open, char close);
 void lval_print(lval *v);
 void lval_println(lval *v);
+char *get_type_name(int t);
 
 #endif
