@@ -1,9 +1,10 @@
 #include "lispy.h"
+#include <stdio.h>
 
-void lval_sexpr_print(lval *v, char open, char close) {
+void lval_sexpr_print(lenv *e, lval *v, char open, char close) {
   putchar(open);
   for (int i = 0; i < v->count; i++) {
-    lval_print(v->cell[i]);
+    lval_print(e, v->cell[i]);
     if (i != (v->count - 1)) {
       putchar(' ');
     }
@@ -11,7 +12,7 @@ void lval_sexpr_print(lval *v, char open, char close) {
   putchar(close);
 }
 
-void lval_print(lval *v) {
+void lval_print(lenv *e, lval *v) {
   switch (v->type) {
   case LVAL_NUM:
     printf("%li", v->num);
@@ -23,19 +24,30 @@ void lval_print(lval *v) {
     printf("%s", v->sym);
     break;
   case LVAL_FUNC:
-    printf("<function>");
+    lval_print_func(e, v);
     break;
   case LVAL_SEXPR:
-    lval_sexpr_print(v, '(', ')');
+    lval_sexpr_print(e, v, '(', ')');
     break;
   case LVAL_QEXPR:
-    lval_sexpr_print(v, '{', '}');
+    lval_sexpr_print(e, v, '{', '}');
     break;
   }
 }
 
-void lval_println(lval *v) {
-  lval_print(v);
+void lval_print_func(lenv *e, lval *v) {
+  for (int i = 0; i < e->count; i++) {
+    if (e->vals[i]->type == LVAL_FUNC && e->vals[i]->func == v->func) {
+      printf("<function: %s>", e->syms[i]);
+      return;
+    }
+  }
+
+  printf("<function: anonymous>");
+}
+
+void lval_println(lenv *e, lval *v) {
+  lval_print(e, v);
   putchar('\n');
 }
 char *get_type_name(int t) {

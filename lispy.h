@@ -67,6 +67,8 @@ lval *builtin_join(lenv *e, lval *v);
 lval *builtin_list(lenv *e, lval *v);
 lval *builtin_eval(lenv *e, lval *v);
 lval *builtin_def(lenv *e, lval *v);
+lval *builtin_print_env(lenv *e, lval *v);
+lval *builtin_exit(lenv *e, lval *v);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);
@@ -99,9 +101,10 @@ void lenv_add_builtin(lenv *e, char *name, lbuiltin func);
 void lenv_add_builtins(lenv *e);
 
 // some utils
-void lval_sexpr_print(lval *v, char open, char close);
-void lval_print(lval *v);
-void lval_println(lval *v);
+void lval_sexpr_print(lenv *e, lval *v, char open, char close);
+void lval_print_func(lenv *e, lval *v);
+void lval_print(lenv *e, lval *v);
+void lval_println(lenv *e, lval *v);
 char *get_type_name(int t);
 
 #endif

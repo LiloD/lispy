@@ -47,7 +47,7 @@ lval *lenv_get(lenv *e, lval *k) {
     }
   }
 
-  return lval_err("unbound symbol");
+  return lval_err("Unbound symbol: %s", k->sym);
 }
 
 void lenv_add_builtin(lenv *e, char *name, lbuiltin func) {

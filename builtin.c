@@ -1,4 +1,6 @@
 #include "lispy.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 lval *builtin_eval(lenv *e, lval *v) {
   LASSERT(v, v->count == 1,
@@ -33,7 +35,7 @@ lval *builtin_join(lenv *e, lval *v) {
 
 lval *builtin_tail(lenv *e, lval *a) {
   LASSERT(a, a->count == 1,
-          "Function 'tail' passed too many arguments, Expect: %s, Got: %s", 1,
+          "Function 'tail' passed too many arguments, Expect: %d, Got: %d", 1,
           a->count);
   LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
           "Function 'tail' passed incorrect type, Expect: %s, Got: %s",
@@ -52,7 +54,7 @@ lval *builtin_tail(lenv *e, lval *a) {
 
 lval *builtin_head(lenv *e, lval *a) {
   LASSERT(a, a->count == 1,
-          "Function 'head' passed too many arguments, Expect: %s, Got: %s", 1,
+          "Function 'head' passed too many arguments, Expect: %d, Got: %d", 1,
           a->count);
   LASSERT(a, a->cell[0]->type == LVAL_QEXPR,
           "Function 'head' passed incorrect type, Expect: %s, Got: %s",
@@ -136,6 +138,8 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "eval", builtin_eval);
   lenv_add_builtin(e, "join", builtin_join);
   lenv_add_builtin(e, "def", builtin_def);
+  lenv_add_builtin(e, "exit", builtin_exit);
+  lenv_add_builtin(e, "print_env", builtin_print_env);
 
   /* Mathematical Functions */
   lenv_add_builtin(e, "+", builtin_add);
@@ -154,10 +158,7 @@ lval *builtin_def(lenv *e, lval *v) {
   // make sure symbol list is all SYMBOL
   for (int i = 0; i < syms->count; i++) {
     LASSERT(v, syms->cell[i]->type == LVAL_SYM,
-            "Function 'def' cannot define non-symbol");
-
-    LASSERT(v, syms->cell[i]->type == LVAL_SYM,
-            "Function 'def' passed incorrect type, Expect: %s, Got: %s",
+            "Function 'def' cannot define non-symbol, Expect: %s, Got: %s",
             get_type_name(LVAL_SYM), get_type_name(syms->cell[i]->type));
   }
 
@@ -171,4 +172,28 @@ lval *builtin_def(lenv *e, lval *v) {
 
   lval_del(v);
   return lval_sexpr();
+}
+
+lval *builtin_print_env(lenv *e, lval *v) {
+  for (int i = 0; i < e->count; i++) {
+    printf("%s: ", e->syms[i]);
+    lval_print(e, e->vals[i]);
+    putchar('\n');
+  }
+
+  lval_del(v);
+  return lval_sexpr();
+}
+
+lval *builtin_exit(lenv *e, lval *v) {
+  LASSERT(v, v->count == 1,
+          "Function 'exit' passed too many arguments, Expect: %d, Got: %d", 1,
+          v->count);
+  LASSERT(v, v->cell[0]->type == LVAL_NUM,
+          "Function 'head' passed incorrect type, Expect: %s, Got: %s",
+          get_type_name(LVAL_NUM), get_type_name(v->cell[0]->type));
+
+  printf("exit with code %ld\n", v->num);
+
+  exit(v->num);
 }

@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
       // lval_println(result);
 
       lval *v = lval_read(t);
-      lval_println(v);
+      lval_println(e, v);
 
       printf("value type:%d\n", v->type);
       printf("---------------------\n");
       v = lval_eval(e, v);
-      lval_println(v);
+      lval_println(e, v);
       lval_del(v);
       mpc_ast_delete(r.output);
     } else {
@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
     free(input);
   }
 
+  lenv_del(e);
   mpc_cleanup(4, Number, Symbol, Sexpr, Expr, Lispy);
   return 0;
 }
