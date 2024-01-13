@@ -361,6 +361,20 @@ lval *lval_call(lenv *e, lval *v, lval *a) {
     }
 
     lval *sym = lval_pop(v->formals, 0);
+    if (strcmp(sym->sym, "&") == 0) {
+      if (v->formals->count != 1) {
+        lval_del(a);
+        return lval_err("Symbol '&' not followed by single symbol");
+      }
+
+      lval *next_sym = lval_pop(v->formals, 0);
+      lenv_put(v->env, next_sym, builtin_list(e, a));
+      lval_del(sym);
+      lval_del(next_sym);
+
+      break;
+    }
+
     lval *val = lval_pop(a, 0);
     lenv_put(v->env, sym, val);
     lval_del(sym);
@@ -372,6 +386,23 @@ lval *lval_call(lenv *e, lval *v, lval *a) {
   if (v->formals->count == 0) {
     v->env->parent = e;
     return builtin_eval(v->env, lval_add(lval_sexpr(), lval_copy(v->body)));
+  }
+
+  if (v->formals->count > 0 && strcmp(v->formals->cell[0]->sym, "&") == 0) {
+    if (v->formals->count != 2) {
+      lval_del(a);
+      return lval_err("Symbol '&' not followed by single symbol");
+    }
+
+    // discard & symbol
+    lval_del(lval_pop(v->formals, 0));
+
+    lval *sym = lval_pop(v->formals, 0);
+    lval *val = lval_qexpr();
+
+    lenv_put(v->env, sym, val);
+    lval_del(sym);
+    lval_del(val);
   }
 
   return lval_copy(v);
