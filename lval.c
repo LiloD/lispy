@@ -180,7 +180,7 @@ lval *lval_eval_sexpr(lenv *e, lval *v) {
   }
 
   // the rest of children inside v is the arguments to op
-  lval *result = f->func(e, v);
+  lval *result = lval_call(e, f, v);
   lval_del(f);
   return result;
 }
@@ -254,10 +254,10 @@ lval *lval_qexpr(void) {
   return v;
 }
 
-lval *lval_func(lbuiltin func) {
+lval *lval_builtin(lbuiltin func) {
   lval *v = malloc(sizeof(lval));
   v->type = LVAL_FUNC;
-  v->func = func;
+  v->builtin = func;
   return v;
 }
 
@@ -279,6 +279,12 @@ void lval_del(lval *v) {
     free(v->cell);
     break;
   case LVAL_FUNC:
+    // only delete user defined function
+    if (!v->builtin) {
+      lenv_del(v->env);
+      lval_del(v->formals);
+      lval_del(v->body);
+    }
     break;
   }
 
@@ -292,7 +298,14 @@ lval *lval_copy(lval *v) {
 
   switch (x->type) {
   case LVAL_FUNC:
-    x->func = v->func;
+    if (v->builtin) {
+      x->builtin = v->builtin;
+    } else {
+      x->builtin = NULL;
+      x->env = lenv_copy(v->env);
+      x->formals = lval_copy(v->formals);
+      x->body = lval_copy(v->body);
+    }
     break;
   case LVAL_NUM:
     x->num = v->num;
@@ -316,4 +329,50 @@ lval *lval_copy(lval *v) {
   }
 
   return x;
+}
+
+lval *lval_lambda(lval *foramls, lval *body) {
+  lval *v = malloc(sizeof(lval));
+  v->type = LVAL_FUNC;
+  v->builtin = NULL;
+  v->env = lenv_new();
+  v->formals = foramls;
+  v->body = body;
+  return v;
+}
+
+// handle the function call
+// v -> function value
+// a -> arguemnt list
+lval *lval_call(lenv *e, lval *v, lval *a) {
+  if (v->builtin) {
+    return v->builtin(e, a);
+  }
+
+  int given = a->count;
+  int total = v->formals->count;
+
+  // now bind argument list to function's formals
+  while (a->count) {
+    if (v->formals->count == 0) {
+      lval_del(a);
+      return lval_err("Function give too many arguments, Expect: %d, Got: %d",
+                      total, given);
+    }
+
+    lval *sym = lval_pop(v->formals, 0);
+    lval *val = lval_pop(a, 0);
+    lenv_put(v->env, sym, val);
+    lval_del(sym);
+    lval_del(val);
+  }
+
+  lval_del(a);
+
+  if (v->formals->count == 0) {
+    v->env->parent = e;
+    return builtin_eval(v->env, lval_add(lval_sexpr(), lval_copy(v->body)));
+  }
+
+  return lval_copy(v);
 }

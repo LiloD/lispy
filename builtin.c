@@ -1,6 +1,7 @@
 #include "lispy.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 lval *builtin_eval(lenv *e, lval *v) {
   LASSERT(v, v->count == 1,
@@ -138,8 +139,10 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "eval", builtin_eval);
   lenv_add_builtin(e, "join", builtin_join);
   lenv_add_builtin(e, "def", builtin_def);
+  lenv_add_builtin(e, "=", builtin_put);
   lenv_add_builtin(e, "exit", builtin_exit);
   lenv_add_builtin(e, "print_env", builtin_print_env);
+  lenv_add_builtin(e, "\\", builtin_lambda);
 
   /* Mathematical Functions */
   lenv_add_builtin(e, "+", builtin_add);
@@ -148,26 +151,32 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "/", builtin_div);
 }
 
-lval *builtin_def(lenv *e, lval *v) {
-  LASSERT(v, v->cell[0]->type == LVAL_QEXPR,
-          "Function 'def' passed incorrect type, Expect: %s, Got: %s",
-          get_type_name(LVAL_QEXPR), get_type_name(v->cell[0]->type));
+lval *builtin_def(lenv *e, lval *v) { return builtin_var(e, v, "def"); }
+
+lval *builtin_put(lenv *e, lval *v) { return builtin_var(e, v, "="); }
+
+lval *builtin_var(lenv *e, lval *v, char *func) {
+  LASSERT_TYPE(func, v, v->cell[0], LVAL_QEXPR, "passed incorrect type");
 
   lval *syms = v->cell[0];
 
   // make sure symbol list is all SYMBOL
   for (int i = 0; i < syms->count; i++) {
-    LASSERT(v, syms->cell[i]->type == LVAL_SYM,
-            "Function 'def' cannot define non-symbol, Expect: %s, Got: %s",
-            get_type_name(LVAL_SYM), get_type_name(syms->cell[i]->type));
+    LASSERT_TYPE(func, v, syms->cell[i], LVAL_SYM, "can not define non-symbol");
   }
 
   LASSERT(v, syms->count == v->count - 1,
-          "Function 'def' cannot define incorrect "
-          "number of values to symbols");
+          "Function '%s' cannot define incorrect "
+          "number of values to symbols",
+          func);
 
   for (int i = 0; i < syms->count; i++) {
-    lenv_put(e, syms->cell[i], v->cell[i + 1]);
+    if (strcmp(func, "def") == 0) {
+      lenv_def(e, syms->cell[i], v->cell[i + 1]);
+    }
+    if (strcmp(func, "=") == 0) {
+      lenv_put(e, syms->cell[i], v->cell[i + 1]);
+    }
   }
 
   lval_del(v);
@@ -196,4 +205,24 @@ lval *builtin_exit(lenv *e, lval *v) {
   printf("exit with code %ld\n", v->num);
 
   exit(v->num);
+}
+
+lval *builtin_lambda(lenv *e, lval *v) {
+  LASSERT_COUNT("\\", v, v, 2, "passed incorrect number of elements");
+  LASSERT_TYPE("\\", v, v->cell[0], LVAL_QEXPR,
+               "first element should be a Q-Expression");
+  LASSERT_TYPE("\\", v, v->cell[1], LVAL_QEXPR,
+               "second element should be a Q-Expression");
+
+  // make sure argument list only contain symbols
+  for (int i = 0; i < v->cell[0]->count; i++) {
+    LASSERT_TYPE("\\", v, v->cell[0]->cell[i], LVAL_SYM,
+                 "can not define non Symbol");
+  }
+
+  lval *formals = lval_pop(v, 0);
+  lval *body = lval_pop(v, 0);
+  lval_del(v);
+
+  return lval_lambda(formals, body);
 }

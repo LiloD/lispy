@@ -10,6 +10,14 @@
     return err;                                                                \
   }
 
+#define LASSERT_COUNT(func_name, v, got, expect, prefix)                       \
+  LASSERT(v, got->count == expect, "'%s' %s, Expect: %d, Got: %d", func_name,  \
+          prefix, expect, got->count)
+
+#define LASSERT_TYPE(func_name, v, got, expect, prefix)                        \
+  LASSERT(v, got->type == expect, "'%s' %s, Expect: %s, Got: %s", func_name,   \
+          prefix, get_type_name(expect), get_type_name(got->type))
+
 typedef struct traverse_stat {
   int num_of_nodes;
   int num_of_leaves;
@@ -26,17 +34,25 @@ typedef lval *(*lbuiltin)(lenv *, lval *);
 
 typedef struct lval {
   int type; // value type
+
+  // basic type
   long num;
-  // error and symbol have some string data
   char *sym;
   char *err;
-  lbuiltin func;
-  // s-expr
+
+  // functions, builtin and user defined
+  lbuiltin builtin;
+  lenv *env;
+  lval *formals;
+  lval *body;
+
+  // s-expr and q-expr
   int count;
   struct lval **cell;
 } lval;
 
 typedef struct lenv {
+  lenv *parent;
   int count;
   char **syms;
   lval **vals;
@@ -67,8 +83,11 @@ lval *builtin_join(lenv *e, lval *v);
 lval *builtin_list(lenv *e, lval *v);
 lval *builtin_eval(lenv *e, lval *v);
 lval *builtin_def(lenv *e, lval *v);
+lval *builtin_put(lenv *e, lval *v);
+lval *builtin_var(lenv *e, lval *v, char *func);
 lval *builtin_print_env(lenv *e, lval *v);
 lval *builtin_exit(lenv *e, lval *v);
+lval *builtin_lambda(lenv *e, lval *v);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);
@@ -77,6 +96,7 @@ lval *lval_copy(lval *v);
 lval *lval_join(lval *x, lval *y);
 lval *lval_eval_sexpr(lenv *e, lval *v);
 lval *lval_eval(lenv *e, lval *v);
+lval *lval_call(lenv *e, lval *v, lval *a);
 
 // read and construct
 lval *lval_read(mpc_ast_t *t);
@@ -89,13 +109,16 @@ lval *lval_err(char *fmt, ...);
 lval *lval_sym(char *s);
 lval *lval_sexpr(void);
 lval *lval_qexpr(void);
-lval *lval_func(lbuiltin func);
+lval *lval_lambda(lval *foramls, lval *body);
+lval *lval_builtin(lbuiltin func);
 void lval_del(lval *v);
 
 // lenv
 lenv *lenv_new(void);
 void lenv_del(lenv *e);
+lenv *lenv_copy(lenv *e);
 void lenv_put(lenv *e, lval *k, lval *v);
+void lenv_def(lenv *e, lval *k, lval *v);
 lval *lenv_get(lenv *e, lval *k);
 void lenv_add_builtin(lenv *e, char *name, lbuiltin func);
 void lenv_add_builtins(lenv *e);
