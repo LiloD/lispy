@@ -1,4 +1,5 @@
 #include "lispy.h"
+#include "mpc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,6 +80,12 @@ lval *builtin_list(lenv *e, lval *v) {
 };
 
 lval *builtin_op(lval *a, char *op) {
+
+  LASSERT(a, a->count != 0,
+          "operator '%s' passed incorrect number of arguments, Expect: "
+          "non-Zero, Got: 0",
+          op);
+
   // make sure all arguments is number(for now)
   for (int i = 0; i < a->count; i++) {
     LASSERT(a, a->cell[i]->type == LVAL_NUM,
@@ -142,6 +149,7 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "=", builtin_put);
   lenv_add_builtin(e, "exit", builtin_exit);
   lenv_add_builtin(e, "print_env", builtin_print_env);
+  lenv_add_builtin(e, "load", builtin_load);
   lenv_add_builtin(e, "\\", builtin_lambda);
 
   /* Mathematical Functions */
@@ -195,16 +203,19 @@ lval *builtin_print_env(lenv *e, lval *v) {
 }
 
 lval *builtin_exit(lenv *e, lval *v) {
-  LASSERT(v, v->count == 1,
-          "Function 'exit' passed too many arguments, Expect: %d, Got: %d", 1,
-          v->count);
-  LASSERT(v, v->cell[0]->type == LVAL_NUM,
-          "Function 'head' passed incorrect type, Expect: %s, Got: %s",
-          get_type_name(LVAL_NUM), get_type_name(v->cell[0]->type));
+  // LASSERT_COUNT("exit", v, v, 1, "passed incorrect number of elements");
+  // LASSERT_TYPE("\\", v, v->cell[0], LVAL_NUM,
+  //"first argument should be a number");
 
-  printf("exit with code %ld\n", v->num);
+  if (v->num == 0) {
+    printf("exit with code 0\n");
+    exit(0);
+  }
 
-  exit(v->num);
+  lval *a = lval_take(v, 0);
+  printf("exit with code %ld\n", a->num);
+
+  exit(a->num);
 }
 
 lval *builtin_lambda(lenv *e, lval *v) {
@@ -225,4 +236,39 @@ lval *builtin_lambda(lenv *e, lval *v) {
   lval_del(v);
 
   return lval_lambda(formals, body);
+}
+
+lval *builtin_load(lenv *e, lval *v) {
+  LASSERT_COUNT("load", v, v, 1, "passed incorrect number of elements");
+  LASSERT_TYPE("load", v, v->cell[0], LVAL_STR,
+               "first argument should be filename");
+
+  mpc_result_t r;
+
+  if (mpc_parse_contents(v->cell[0]->str, Lispy, &r)) {
+    mpc_ast_print(r.output);
+    lval *expr = lval_read(r.output);
+    while (expr->count) {
+      lval *a = lval_pop(expr, 0);
+      lval *x = lval_eval(e, a);
+      // if (x->type == LVAL_ERR) {
+      lval_println(e, x);
+      // }
+      lval_del(x);
+    }
+    lval_del(expr);
+    lval_del(v);
+
+    return lval_sexpr();
+  } else {
+    // handle parse error
+    char *err_msg = mpc_err_string(r.error);
+    mpc_err_delete(r.error);
+
+    lval *err = lval_err("Could not load library: %s", err_msg);
+    free(err_msg);
+    lval_del(v);
+
+    return err;
+  }
 }

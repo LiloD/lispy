@@ -1,5 +1,8 @@
 #include "lispy.h"
+#include "mpc.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void lval_sexpr_print(lenv *e, lval *v, char open, char close) {
   putchar(open);
@@ -22,6 +25,9 @@ void lval_print(lenv *e, lval *v) {
     break;
   case LVAL_SYM:
     printf("%s", v->sym);
+    break;
+  case LVAL_STR:
+    lval_print_str(v);
     break;
   case LVAL_FUNC:
     lval_print_func(e, v);
@@ -49,6 +55,14 @@ void lval_print_func(lenv *e, lval *v) {
   printf("<function>");
 }
 
+void lval_print_str(lval *v) {
+  char *escaped = malloc(strlen(v->str) + 1);
+  strcpy(escaped, v->str);
+  escaped = mpcf_escape(escaped);
+  printf("\"%s\"", escaped);
+  free(escaped);
+}
+
 void lval_println(lenv *e, lval *v) {
   lval_print(e, v);
   putchar('\n');
@@ -61,6 +75,8 @@ char *get_type_name(int t) {
     return "Error";
   case LVAL_SYM:
     return "Symbol";
+  case LVAL_STR:
+    return "String";
   case LVAL_SEXPR:
     return "S-Expression";
   case LVAL_QEXPR:

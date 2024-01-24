@@ -18,6 +18,14 @@
   LASSERT(v, got->type == expect, "'%s' %s, Expect: %s, Got: %s", func_name,   \
           prefix, get_type_name(expect), get_type_name(got->type))
 
+extern mpc_parser_t *Symbol;
+extern mpc_parser_t *Number;
+extern mpc_parser_t *Sexpr;
+extern mpc_parser_t *Qexpr;
+extern mpc_parser_t *Expr;
+extern mpc_parser_t *String;
+extern mpc_parser_t *Lispy;
+
 typedef struct traverse_stat {
   int num_of_nodes;
   int num_of_leaves;
@@ -39,6 +47,7 @@ typedef struct lval {
   long num;
   char *sym;
   char *err;
+  char *str;
 
   // functions, builtin and user defined
   lbuiltin builtin;
@@ -63,6 +72,7 @@ enum {
   LVAL_NUM,
   LVAL_ERR,
   LVAL_SYM,
+  LVAL_STR,
   LVAL_SEXPR, // S-expr is a variable list of other values
   LVAL_QEXPR,
   LVAL_FUNC,
@@ -88,6 +98,7 @@ lval *builtin_var(lenv *e, lval *v, char *func);
 lval *builtin_print_env(lenv *e, lval *v);
 lval *builtin_exit(lenv *e, lval *v);
 lval *builtin_lambda(lenv *e, lval *v);
+lval *builtin_load(lenv *e, lval *v);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);
@@ -102,11 +113,13 @@ lval *lval_call(lenv *e, lval *v, lval *a);
 lval *lval_read(mpc_ast_t *t);
 lval *lval_read_num(mpc_ast_t *t);
 lval *lval_read_sym(mpc_ast_t *t);
+lval *lval_read_str(mpc_ast_t *t);
 lval *lval_add(lval *v, lval *x);
 
 lval *lval_num(long x);
 lval *lval_err(char *fmt, ...);
 lval *lval_sym(char *s);
+lval *lval_str(char *s);
 lval *lval_sexpr(void);
 lval *lval_qexpr(void);
 lval *lval_lambda(lval *foramls, lval *body);
@@ -126,6 +139,7 @@ void lenv_add_builtins(lenv *e);
 // some utils
 void lval_sexpr_print(lenv *e, lval *v, char open, char close);
 void lval_print_func(lenv *e, lval *v);
+void lval_print_str(lval *v);
 void lval_print(lenv *e, lval *v);
 void lval_println(lenv *e, lval *v);
 char *get_type_name(int t);

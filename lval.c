@@ -60,6 +60,16 @@ lval *lval_read_num(mpc_ast_t *t) {
 
 lval *lval_read_sym(mpc_ast_t *t) { return lval_sym(t->contents); }
 
+lval *lval_read_str(mpc_ast_t *t) {
+  t->contents[strlen(t->contents) - 1] = '\0';
+  char *unescaped = malloc(strlen(t->contents + 1) + 1);
+  strcpy(unescaped, t->contents + 1);
+  unescaped = mpcf_unescape(unescaped);
+  lval *str = lval_str(unescaped);
+  free(unescaped);
+  return str;
+}
+
 lval *lval_add(lval *v, lval *x) {
   v->count++;
   v->cell = realloc(v->cell, sizeof(lval *) * v->count);
@@ -82,12 +92,14 @@ this is a ast example
   regex
 */
 lval *lval_read(mpc_ast_t *t) {
-  printf("read ast node: %s\n", t->tag);
   if (strstr(t->tag, "number")) {
     return lval_read_num(t);
   }
   if (strstr(t->tag, "symbol")) {
     return lval_read_sym(t);
+  }
+  if (strstr(t->tag, "string")) {
+    return lval_read_str(t);
   }
 
   lval *x = NULL;
@@ -167,7 +179,7 @@ lval *lval_eval_sexpr(lenv *e, lval *v) {
     return v;
   }
 
-  if (v->count == 1) {
+  if (v->count == 1 && v->cell[0]->type != LVAL_FUNC) {
     return lval_take(v, 0);
   }
 
@@ -222,6 +234,20 @@ lval *lval_sym(char *s) {
   return v;
 }
 
+lval *lval_str(char *s) {
+  lval *v = malloc(sizeof(lval));
+  v->type = LVAL_STR;
+
+  // int slen = strlen(s);
+  // v->str = malloc(slen - 2 + 1);
+  // strncpy(v->str, s + 1, slen - 2);
+  // v->str[slen - 2] = '\0';
+  v->str = malloc(strlen(s) + 1);
+  strcpy(v->str, s);
+
+  return v;
+}
+
 lval *lval_err(char *fmt, ...) {
   lval *v = malloc(sizeof(lval));
   v->type = LVAL_ERR;
@@ -267,6 +293,9 @@ void lval_del(lval *v) {
     break;
   case LVAL_SYM:
     free(v->sym);
+    break;
+  case LVAL_STR:
+    free(v->str);
     break;
   case LVAL_ERR:
     free(v->err);
@@ -317,6 +346,10 @@ lval *lval_copy(lval *v) {
   case LVAL_SYM:
     x->sym = malloc(strlen(v->sym) + 1);
     strcpy(x->sym, v->sym);
+    break;
+  case LVAL_STR:
+    x->str = malloc(strlen(v->str) + 1);
+    strcpy(x->str, v->str);
     break;
   case LVAL_SEXPR:
   case LVAL_QEXPR:

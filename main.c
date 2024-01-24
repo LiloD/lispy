@@ -20,71 +20,86 @@ void add_history(char *unused) {}
 #else
 #include <editline/readline.h>
 #endif
+
+mpc_parser_t *Symbol;
+mpc_parser_t *Number;
+mpc_parser_t *Sexpr;
+mpc_parser_t *Qexpr;
+mpc_parser_t *Expr;
+mpc_parser_t *String;
+mpc_parser_t *Lispy;
+
 int main(int argc, char **argv) {
   // init mpc
-  mpc_parser_t *Number = mpc_new("number");
-  mpc_parser_t *Symbol = mpc_new("symbol");
-  mpc_parser_t *Sexpr = mpc_new("sexpr");
-  mpc_parser_t *Qexpr = mpc_new("qexpr");
-  mpc_parser_t *Expr = mpc_new("expr");
-  mpc_parser_t *Lispy = mpc_new("lispy");
+  Number = mpc_new("number");
+  Symbol = mpc_new("symbol");
+  Sexpr = mpc_new("sexpr");
+  Qexpr = mpc_new("qexpr");
+  Expr = mpc_new("expr");
+  String = mpc_new("string");
+  Lispy = mpc_new("lispy");
 
   mpca_lang(MPCA_LANG_DEFAULT, " \
              number : /-?[0-9]+/; \
              symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/; \
+             string: /\"(\\\\.|[^\"])*\"/; \
              sexpr: '(' <expr>* ')' ; \
              qexpr: '{' <expr>* '}' ; \
-             expr : <number> | <symbol> | <sexpr> | <qexpr>;\
+             expr : <number> | <string> | <symbol> | <sexpr> | <qexpr>;\
              lispy : /^/ <expr>* /$/ ; \
             ",
-            Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
-
-  puts("Lispy version 0.0.1");
-  puts("Press Ctrl+c to exit");
+            Number, Symbol, String, Sexpr, Qexpr, Expr, Lispy);
 
   // init the env and add default builtins
   lenv *e = lenv_new();
   lenv_add_builtins(e);
 
-  while (1) {
-    char *input = readline("lispy> ");
+  if (argc == 1) {
+    puts("Lispy version 0.0.1");
+    puts("Press Ctrl+c to exit");
 
-    add_history(input);
+    while (1) {
+      char *input = readline("lispy> ");
 
-    mpc_result_t r;
-    if (mpc_parse("<stdin>", input, Lispy, &r)) {
-      mpc_ast_print(r.output);
+      add_history(input);
 
-      mpc_ast_t *t = r.output;
+      mpc_result_t r;
+      if (mpc_parse("<stdin>", input, Lispy, &r)) {
+        mpc_ast_print(r.output);
 
-      // traverse_stat stat = bfs(t);
-      // printf("number of nodes in this ast is: %d\n", stat.num_of_nodes);
-      // printf("number of leaves in this ast is: %d\n", stat.num_of_leaves);
-      // printf("number of branches in this ast is: %d\n",
-      // stat.num_of_branches); printf("max of children: %d\n",
-      // stat.max_children);
+        mpc_ast_t *t = r.output;
 
-      // lval result = eval(t);
-      // lval_println(result);
+        lval *v = lval_read(t);
+        lval_println(e, v);
 
-      lval *v = lval_read(t);
-      lval_println(e, v);
+        printf("value type:%d\n", v->type);
+        printf("---------------------\n");
+        v = lval_eval(e, v);
+        lval_println(e, v);
+        lval_del(v);
+        mpc_ast_delete(r.output);
+      } else {
+        mpc_err_print(r.error);
+        mpc_err_print(r.error);
+      }
 
-      printf("value type:%d\n", v->type);
-      printf("---------------------\n");
-      v = lval_eval(e, v);
-      lval_println(e, v);
-      lval_del(v);
-      mpc_ast_delete(r.output);
-    } else {
-      mpc_err_print(r.error);
-      mpc_err_print(r.error);
+      free(input);
     }
+  }
 
-    free(input);
+  if (argc >= 2) {
+    for (int i = 1; i < argc; i++) {
+      lval *args = lval_add(lval_sexpr(), lval_str(argv[i]));
+      lval *x = builtin_load(e, args);
+
+      if (x->type == LVAL_ERR) {
+        lval_println(e, x);
+      }
+      lval_del(x);
+    }
   }
 
   lenv_del(e);
-  mpc_cleanup(4, Number, Symbol, Sexpr, Expr, Lispy);
+  mpc_cleanup(6, Number, Symbol, String, Sexpr, Expr, Lispy);
   return 0;
 }
