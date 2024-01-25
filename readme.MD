@@ -8,7 +8,12 @@ Try implement String
 
 ## 2024-01-25
 [x]1. S-Expression not start with a Function => string literal
-2. Builtin load seems not work in cli
+[x]2. Builtin load seems not work in cli
 [x]3. string regex refine and excape/unescape
 [x]4. redefine a var from number to string generate panic
 [x]5. define a string and print will generate panci
+
+## 2024-01-25
+1. re-watch function part
+[x]2. add comment
+3. add assert and write some test maybe?(how golang or C unit test work?)

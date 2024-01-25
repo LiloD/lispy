@@ -92,6 +92,9 @@ this is a ast example
   regex
 */
 lval *lval_read(mpc_ast_t *t) {
+  if (strstr(t->tag, "comment")) {
+    return NULL;
+  }
   if (strstr(t->tag, "number")) {
     return lval_read_num(t);
   }
@@ -131,7 +134,11 @@ lval *lval_read(mpc_ast_t *t) {
     if (strcmp(t->children[i]->tag, "regex") == 0) {
       continue;
     }
-    x = lval_add(x, lval_read(t->children[i]));
+
+    lval *c = lval_read(t->children[i]);
+    if (c) {
+      x = lval_add(x, c);
+    }
   }
 
   return x;

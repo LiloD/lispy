@@ -1,1 +1,19 @@
+# define a variable
 (def {a} 1)
+# define a function
+(def {foo} (
+    \ {a b} {+ a b}
+))
+(+ a a)
+(foo a a)
+
+# def `fun`
+(def {fun} (\ {args body} {
+    def (head args) (\ (tail args) body)
+}))
+
+(fun {sum x y} {+ x y})
+
+(sum 10 100)
+
+

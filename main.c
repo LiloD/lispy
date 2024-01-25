@@ -27,6 +27,7 @@ mpc_parser_t *Sexpr;
 mpc_parser_t *Qexpr;
 mpc_parser_t *Expr;
 mpc_parser_t *String;
+mpc_parser_t *Comment;
 mpc_parser_t *Lispy;
 
 int main(int argc, char **argv) {
@@ -38,6 +39,7 @@ int main(int argc, char **argv) {
   Expr = mpc_new("expr");
   String = mpc_new("string");
   Lispy = mpc_new("lispy");
+  Comment = mpc_new("comment");
 
   mpca_lang(MPCA_LANG_DEFAULT, " \
              number : /-?[0-9]+/; \
@@ -45,10 +47,11 @@ int main(int argc, char **argv) {
              string: /\"(\\\\.|[^\"])*\"/; \
              sexpr: '(' <expr>* ')' ; \
              qexpr: '{' <expr>* '}' ; \
-             expr : <number> | <string> | <symbol> | <sexpr> | <qexpr>;\
+             comment: /#.*/ ; \
+             expr : <comment> | <number> | <string> | <symbol> | <sexpr> | <qexpr>;\
              lispy : /^/ <expr>* /$/ ; \
             ",
-            Number, Symbol, String, Sexpr, Qexpr, Expr, Lispy);
+            Comment, Number, Symbol, String, Sexpr, Qexpr, Expr, Lispy);
 
   // init the env and add default builtins
   lenv *e = lenv_new();
@@ -100,6 +103,6 @@ int main(int argc, char **argv) {
   }
 
   lenv_del(e);
-  mpc_cleanup(6, Number, Symbol, String, Sexpr, Expr, Lispy);
+  mpc_cleanup(7, Comment, Number, Symbol, String, Sexpr, Expr, Lispy);
   return 0;
 }
