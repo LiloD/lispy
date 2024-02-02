@@ -14,6 +14,14 @@
   LASSERT(v, got->count == expect, "'%s' %s, Expect: %d, Got: %d", func_name,  \
           prefix, expect, got->count)
 
+#define LASSERT_GREAT_THAN(func_name, v, got, expect, prefix)                  \
+  LASSERT(v, got->count > expect, "'%s' %s, Expect: > %d, Got: %d", func_name, \
+          prefix, expect, got->count)
+
+#define LASSERT_LESS_THAN(func_name, v, got, expect, prefix)                   \
+  LASSERT(v, got->count < expect, "'%s' %s, Expect: < %d, Got: %d", func_name, \
+          prefix, expect, got->count)
+
 #define LASSERT_TYPE(func_name, v, got, expect, prefix)                        \
   LASSERT(v, got->type == expect, "'%s' %s, Expect: %s, Got: %s", func_name,   \
           prefix, get_type_name(expect), get_type_name(got->type))
@@ -100,6 +108,11 @@ lval *builtin_print_env(lenv *e, lval *v);
 lval *builtin_exit(lenv *e, lval *v);
 lval *builtin_lambda(lenv *e, lval *v);
 lval *builtin_load(lenv *e, lval *v);
+lval *builtin_print(lenv *e, lval *v);
+lval *builtin_if(lenv *e, lval *v);
+lval *builtin_cmp(lenv *e, lval *v, char *op);
+lval *builtin_eq(lenv *e, lval *v);
+lval *builtin_ne(lenv *e, lval *v);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);
@@ -126,6 +139,8 @@ lval *lval_qexpr(void);
 lval *lval_lambda(lval *foramls, lval *body);
 lval *lval_builtin(lbuiltin func);
 void lval_del(lval *v);
+int lval_is_zero(lenv *e, lval *v);
+int lval_eq(lenv *e, lval *a, lval *b);
 
 // lenv
 lenv *lenv_new(void);

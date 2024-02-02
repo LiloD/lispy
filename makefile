@@ -6,7 +6,7 @@ links := -ledit
 
 compiler := gcc
 
-flags := -Wall -std=c99 -g -O0 -o $(target)
+flags := -Wall -std=c11 -g -O0 -o $(target)
 
 all: $(target)
 

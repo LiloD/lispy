@@ -41,19 +41,7 @@ void lval_print(lenv *e, lval *v) {
   }
 }
 
-// ToDo: refactor later
-void lval_print_func(lenv *e, lval *v) {
-  // for (int i = 0; i < e->count; i++) {
-  // if (e->vals[i]->type == LVAL_FUNC && e->vals[i]->func == v->func) {
-  // printf("<function: %s>", e->syms[i]);
-  // return;
-  //}
-  //}
-  //
-  // printf("<function: anonymous>");
-
-  printf("<function>");
-}
+void lval_print_func(lenv *e, lval *v) { printf("<function>"); }
 
 void lval_print_str(lval *v) {
   char *escaped = malloc(strlen(v->str) + 1);

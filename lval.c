@@ -447,3 +447,59 @@ lval *lval_call(lenv *e, lval *v, lval *a) {
 
   return lval_copy(v);
 }
+
+int lval_eq(lenv *e, lval *a, lval *b) {
+  if (a->type != b->type) {
+    return 0;
+  }
+
+  switch (a->type) {
+  case LVAL_NUM:
+    return a->num == b->num;
+  case LVAL_ERR:
+    return strcmp(a->err, b->err) == 0;
+  case LVAL_SYM:
+    return strcmp(a->sym, b->sym) == 0;
+  case LVAL_STR:
+    return strcmp(a->str, b->str) == 0;
+  case LVAL_QEXPR:
+  case LVAL_SEXPR:
+    if (a->count != b->count) {
+      return 0;
+    }
+    for (int i = 0; i < a->count; i++) {
+      if (!lval_eq(e, a->cell[i], b->cell[i])) {
+        return 0;
+      }
+    }
+
+    return 1;
+  case LVAL_FUNC:
+    if (a->builtin || b->builtin) {
+      return a->builtin == b->builtin;
+    } else {
+      return lval_eq(e, a->formals, b->formals) && lval_eq(e, a->body, b->body);
+    }
+  }
+  return 0;
+}
+
+int lval_is_zero(lenv *e, lval *v) {
+  if (!v) {
+    return 1;
+  }
+
+  switch (v->type) {
+  case LVAL_NUM:
+    return v->num == 0;
+  case LVAL_STR:
+    return strlen(v->str) == 0;
+  case LVAL_ERR:
+    return strlen(v->err) == 0;
+  case LVAL_QEXPR:
+  case LVAL_SEXPR:
+    return v->count == 0;
+  }
+
+  return 0;
+}

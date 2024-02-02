@@ -1,0 +1,71 @@
+# core function
+(def {true} 1)
+(def {false} 0)
+(def {nil} {})
+(def {noop} ())
+
+# function related
+(def {func} (
+    \ {args body} {
+        def (head args) (\ (tail args) body)
+    }
+))
+
+# unpack list into a variable arugments
+(func {unpack f xs} {
+    eval (join (list f) xs)
+})
+
+# pack variable arguments into a list
+(func {pack f & args} {
+   f args 
+})
+
+(func {map f l} { 
+    if l 
+    {join (list (f (first l))) (map f (tail l))}
+    {nil}
+})
+
+(func {reduce f l s} {
+    if l
+    {reduce f (tail l) (
+        f (first l) s
+    )}
+    {s}
+})
+
+# list related 
+(func {first l} {
+    eval (head l)
+})
+
+(func {len l} {
+  if (== l {})
+    {0}
+    {+ 1 (len (tail l))}
+})
+
+# logic related
+(func {!! x} {
+    if x 
+    {1}
+    {0}
+})
+
+(func {and2 a b} {
+    !! (* (!! a) (!! b))
+})
+
+(func {or2 a b} {
+    !! (+ (!! a) (!! b))
+})
+
+(func {and l} {
+    reduce and2 l true
+}) 
+
+(func {or l} {
+    reduce or2 l false
+}) 
+

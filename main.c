@@ -57,6 +57,10 @@ int main(int argc, char **argv) {
   lenv *e = lenv_new();
   lenv_add_builtins(e);
 
+  // laod the core lib
+  lval *core_lib = lval_str("lib/core.lispy");
+  builtin_load(e, lval_add(lval_sexpr(), core_lib));
+
   if (argc == 1) {
     puts("Lispy version 0.0.1");
     puts("Press Ctrl+c to exit");
@@ -68,15 +72,13 @@ int main(int argc, char **argv) {
 
       mpc_result_t r;
       if (mpc_parse("<stdin>", input, Lispy, &r)) {
-        mpc_ast_print(r.output);
+        // mpc_ast_print(r.output);
 
         mpc_ast_t *t = r.output;
 
         lval *v = lval_read(t);
-        lval_println(e, v);
+        // lval_println(e, v);
 
-        printf("value type:%d\n", v->type);
-        printf("---------------------\n");
         v = lval_eval(e, v);
         lval_println(e, v);
         lval_del(v);

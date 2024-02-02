@@ -1,0 +1,27 @@
+# for number, string and q-expression
+(if 1 { print "ok" }) 
+(if "hello" { print "ok" }) 
+(if {1 2} { print "ok" }) 
+
+(if 0 { print "ok" } {print "no"}) 
+(if "" { print "ok" } {print "no"}) 
+(if {} { print "ok" } {print "no"}) 
+
+# for s-expression
+(print "------")
+(if () { print "ok" } {print "no"}) 
+(if (1) { print "ok" } {print "no"}) 
+(if (head {1 2}) { print "ok" } {print "no"}) 
+
+# for symbol
+(print "------")
+(def {a} 1)
+(def {b} 0)
+(def {c} {})
+(def {d} "hello")
+(def {e} "")
+(if a { print "ok" } {print "no"}) 
+(if b { print "ok" } {print "no"}) 
+(if c { print "ok" } {print "no"}) 
+(if d { print "ok" } {print "no"}) 
+(if e { print "ok" } {print "no"}) 

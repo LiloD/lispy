@@ -1,0 +1,24 @@
+(def {foo} (
+    \ {a & args} {
+        print a args
+    }
+))
+
+(foo 1 2 3 4)
+
+(func {add-together x y} {
+    + x y
+})
+
+(print (add-together 1 2))
+
+(func {unpack f xs} {eval (join (list f) xs)})
+
+(print (unpack + {1 2 3 4}))
+
+(func {pack f & args} {
+   f args 
+})
+
+(print (pack head 1 2 3))
+

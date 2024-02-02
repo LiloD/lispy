@@ -1,0 +1,5 @@
+(func {expect a b} {
+    if (!= a b) {
+        print "fail"
+    }
+})
