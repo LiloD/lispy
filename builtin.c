@@ -144,8 +144,9 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "tail", builtin_tail);
   lenv_add_builtin(e, "eval", builtin_eval);
   lenv_add_builtin(e, "join", builtin_join);
-  lenv_add_builtin(e, "def", builtin_def);
-  lenv_add_builtin(e, "=", builtin_put);
+  lenv_add_builtin(e, "global", builtin_def_global);
+  lenv_add_builtin(e, ":=", builtin_def_local);
+  lenv_add_builtin(e, "=", builtin_assign);
   lenv_add_builtin(e, "exit", builtin_exit);
   lenv_add_builtin(e, "print_env", builtin_print_env);
   lenv_add_builtin(e, "load", builtin_load);
@@ -161,9 +162,13 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "/", builtin_div);
 }
 
-lval *builtin_def(lenv *e, lval *v) { return builtin_var(e, v, "def"); }
+lval *builtin_def_global(lenv *e, lval *v) {
+  return builtin_var(e, v, "global");
+}
 
-lval *builtin_put(lenv *e, lval *v) { return builtin_var(e, v, "="); }
+lval *builtin_def_local(lenv *e, lval *v) { return builtin_var(e, v, ":="); }
+
+lval *builtin_assign(lenv *e, lval *v) { return builtin_var(e, v, "="); }
 
 lval *builtin_var(lenv *e, lval *v, char *func) {
   LASSERT_TYPE(func, v, v->cell[0], LVAL_QEXPR, "passed incorrect type");
@@ -181,11 +186,17 @@ lval *builtin_var(lenv *e, lval *v, char *func) {
           func);
 
   for (int i = 0; i < syms->count; i++) {
-    if (strcmp(func, "def") == 0) {
-      lenv_def(e, syms->cell[i], v->cell[i + 1]);
+    if (strcmp(func, "global") == 0) {
+      lenv_put_global(e, syms->cell[i], v->cell[i + 1]);
+    }
+    if (strcmp(func, ":=") == 0) {
+      lenv_put(e, syms->cell[i], v->cell[i + 1]);
     }
     if (strcmp(func, "=") == 0) {
-      lenv_put(e, syms->cell[i], v->cell[i + 1]);
+      lval *err = lenv_assign(e, syms->cell[i], v->cell[i + 1]);
+      if (err) {
+        return err;
+      }
     }
   }
 

@@ -1,6 +1,19 @@
-(def {welcome_message} "hello world")
+#(load "lib/test.lispy")
+#
+#(def {welcome_message} "hello world")
+#
+#(func {say msg} {print msg}) 
+#
+#(say welcome_message)
 
-(func {say msg} {print msg}) 
+(print "hello world")
 
-(say welcome_message)
+(def {x} 2)
 
+(block {
+    (print "before assign local x, x:" x)
+    (= {x} "foo")
+    (print "after assign local x, x:" x)
+})
+
+(print "x outside of block" x)

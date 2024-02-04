@@ -1,5 +1,17 @@
-(func {expect a b} {
-    if (!= a b) {
-        print "fail"
-    }
+(func {test msg body} {do
+    (print "RUN -" msg)
+    (:= {i} 0)
+    (:= {r} 1)
+    (func {expect a b} {do
+        (if (!= a b) {do
+            (print " * FAIL expect #" i)
+            (= {r} 0)
+        })
+        (= {i} (+ i 1))
+    })    
+    (block body)
+    (if r 
+        {print "PASS"}
+        {print "FAIL"}
+    )
 })

@@ -42,13 +42,29 @@ void lenv_put(lenv *e, lval *k, lval *v) {
 }
 
 // def in global environment
-void lenv_def(lenv *e, lval *k, lval *v) {
+void lenv_put_global(lenv *e, lval *k, lval *v) {
   while (e->parent) {
     e = e->parent;
   }
 
   lenv_put(e, k, v);
 }
+
+lval *lenv_assign(lenv *e, lval *k, lval *v) {
+  for (int i = 0; i < e->count; i++) {
+    if (strcmp(k->sym, e->syms[i]) == 0) {
+      lenv_put(e, k, v);
+      return NULL;
+    }
+  }
+
+  if (e->parent) {
+    return lenv_assign(e->parent, k, v);
+  }
+
+  return lval_err("Unbound symbol: %s", k->sym);
+}
+
 lval *lenv_get(lenv *e, lval *k) {
   for (int i = 0; i < e->count; i++) {
     if (strcmp(k->sym, e->syms[i]) == 0) {

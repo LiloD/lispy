@@ -1,13 +1,13 @@
 # core function
-(def {true} 1)
-(def {false} 0)
-(def {nil} {})
-(def {noop} ())
+(global {true} 1)
+(global {false} 0)
+(global {nil} {})
+(global {noop} ())
 
 # function related
-(def {func} (
+(global {func} (
     \ {args body} {
-        def (head args) (\ (tail args) body)
+        global (head args) (\ (tail args) body)
     }
 ))
 
@@ -33,6 +33,18 @@
         f (first l) s
     )}
     {s}
+})
+
+# scope 
+# evaluate list of s-expression in order
+(func {do & l} {
+    if (== l nil)
+    {nil}
+})
+
+# create a scope and evaluate in order
+(func {block body} {
+    ((\ {_} { unpack do body }) nil)
 })
 
 # list related 
