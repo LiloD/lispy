@@ -115,6 +115,7 @@ lval *builtin_if(lenv *e, lval *v);
 lval *builtin_cmp(lenv *e, lval *v, char *op);
 lval *builtin_eq(lenv *e, lval *v);
 lval *builtin_ne(lenv *e, lval *v);
+lval *builtin_error(lenv *e, lval *a);
 
 // lval
 lval *lval_pop(lval *sexpr, int idx);

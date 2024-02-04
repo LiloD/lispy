@@ -1,0 +1,23 @@
+(load "lib/test.lispy")
+
+(test "lispy misc functions test" {
+    ((flip global) 1 {x})
+
+    (expect x 1)
+
+    (global {define2} ((flip global) 2))
+    
+    (define2 {y})
+
+    (expect y 2)
+
+    (global {mult} (unpack *))
+
+    (expect (mult {2 2}) 4)
+   
+    (global {not-mult} (comp not mult))    
+
+    (expect (not-mult {2 2}) false)
+
+    (expect (not-mult {2 0}) true)
+})

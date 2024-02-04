@@ -4,7 +4,7 @@
     (:= {r} 1)
     (func {expect a b} {do
         (if (!= a b) {do
-            (print " * FAIL expect #" i)
+            (print " * FAIL expect #" (+ 1 i) ":" "expect:" b "got:" a)
             (= {r} 0)
         })
         (= {i} (+ i 1))

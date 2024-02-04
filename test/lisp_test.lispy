@@ -1,0 +1,39 @@
+(load "lib/test.lispy")
+
+(global {l} {1 2 3 4}) 
+
+(test "test list op len, first, nth, last" {
+    (expect (len l) 4)
+
+    (expect (first l) 1)
+
+    (expect (nth 0 l) 1)
+
+    (expect (nth 1 l) 2)
+
+    (expect (nth 2 l) 3)
+
+    (expect (nth 3 l) 4)
+
+    (expect (last l) 4)
+})
+
+(test "test list op take, drop, split, in" {
+    (expect (take 0 l) nil)
+    
+    (expect (take 1 l) {1})
+    
+    (expect (take 2 l) {1 2})
+    
+    (expect (drop 0 l) {1 2 3 4})
+    
+    (expect (drop 1 l) {2 3 4})
+    
+    (expect (split 1 l) {{1} {2 3 4}})
+    
+    (expect (split 2 l) {{1 2} {3 4}})
+    
+    (expect (in 0 l) true)
+
+    (expect (in 10 l) false)
+})

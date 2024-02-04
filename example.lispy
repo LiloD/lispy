@@ -6,14 +6,18 @@
 #
 #(say welcome_message)
 
-(print "hello world")
-
-(def {x} 2)
-
-(block {
-    (print "before assign local x, x:" x)
-    (= {x} "foo")
-    (print "after assign local x, x:" x)
+(func {foo} {do
+    (:= {bar} (\
+        {} { print "bar inside"}
+    ))
+    
+    (bar)
 })
 
-(print "x outside of block" x)
+(foo)
+
+(:= {x} (
+    \ {} {print "this is x function"}
+))
+
+(x)

@@ -150,6 +150,7 @@ void lenv_add_builtins(lenv *e) {
   lenv_add_builtin(e, "exit", builtin_exit);
   lenv_add_builtin(e, "print_env", builtin_print_env);
   lenv_add_builtin(e, "load", builtin_load);
+  lenv_add_builtin(e, "error", builtin_error);
   lenv_add_builtin(e, "print", builtin_print);
   lenv_add_builtin(e, "if", builtin_if);
   lenv_add_builtin(e, "\\", builtin_lambda);
@@ -352,3 +353,15 @@ lval *builtin_cmp(lenv *e, lval *v, char *op) {
 lval *builtin_eq(lenv *e, lval *v) { return builtin_cmp(e, v, "=="); }
 
 lval *builtin_ne(lenv *e, lval *v) { return builtin_cmp(e, v, "!="); }
+
+lval *builtin_error(lenv *e, lval *a) {
+  LASSERT_COUNT("error", a, a, 1, "incorrect number of arguments")
+  LASSERT_TYPE("error", a, a->cell[0], LVAL_STR, "arguments should be string")
+
+  /* Construct Error from first argument */
+  lval *err = lval_err(a->cell[0]->str);
+
+  /* Delete arguments and return */
+  lval_del(a);
+  return err;
+}

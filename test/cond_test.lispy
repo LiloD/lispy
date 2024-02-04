@@ -1,0 +1,40 @@
+(load "lib/test.lispy")
+
+(test "test conditional op !!" {
+    (expect (!! 1) true)
+    (expect (!! 0) false)
+    (expect (!! "foo") true)
+    (expect (!! "") false)
+    (expect (!! {1}) true)
+    (expect (!! {}) false)
+})
+
+(test "test conditional op not" {
+    (expect (not 1) false)
+    (expect (not 0) true)
+    (expect (not "foo") false)
+    (expect (not "") true)
+    (expect (not {1}) false)
+    (expect (not {}) true)
+})
+
+(test "test conditional op and" {
+    (expect (and {1 1}) true)
+    (expect (and {1 1 1}) true)
+    (expect (and {0 1 1}) false)
+    (expect (and {1 1 0}) false)
+    (expect (and {1 ""}) false)
+    (expect (and {1 {}}) false)
+    (expect (and {1 {1} "foo"}) true)
+})
+
+(test "test conditional op or" {
+    (expect (or {1 1}) true)
+    (expect (or {1 1 1}) true)
+    (expect (or {0 1 1}) true)
+    (expect (or {0 0 0}) false)
+    (expect (or {1 ""}) true)
+    (expect (or {1 {}}) true)
+    (expect (or {0 {}}) false)
+    (expect (or {1 {1} "foo"}) true)
+})

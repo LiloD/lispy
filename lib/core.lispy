@@ -35,6 +35,10 @@
     {s}
 })
 
+(func {flip f a b} {f b a})
+
+(func {comp f g x} {f (g x)})
+
 # scope 
 # evaluate list of s-expression in order
 (func {do & l} {
@@ -42,7 +46,6 @@
     {nil}
 })
 
-# create a scope and evaluate in order
 (func {block body} {
     ((\ {_} { unpack do body }) nil)
 })
@@ -52,17 +55,61 @@
     eval (head l)
 })
 
+(func {nth n l} {
+    if (! n)
+    {first l}
+    {nth (- n 1) (tail l)}
+})
+
 (func {len l} {
   if (== l {})
     {0}
     {+ 1 (len (tail l))}
 })
 
-# logic related
+(func {last l} {
+    nth (- (len l) 1) l
+})
+
+(func {take n l} {
+  if (== n 0)
+    {nil}
+    {join (head l) (take (- n 1) (tail l))}
+})
+
+(func {drop n l} {
+  if (== n 0)
+    {l}
+    {drop (- n 1) (tail l)}
+})
+
+(func {split n l} {
+    list (take n l) (drop n l)
+})
+
+(func {in x l} {
+    if (! l)
+    {false}
+    {
+        if (== (first l) l) 
+        {true}
+        {in x (tail l)}
+    }
+})
+
+# logic related 
 (func {!! x} {
     if x 
     {1}
     {0}
+})
+
+(func {not x} {
+    !! (- 1 (!! x))
+})
+
+(func {! x} {
+    not x
 })
 
 (func {and2 a b} {
