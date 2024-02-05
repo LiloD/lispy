@@ -44,6 +44,7 @@
 (func {do & l} {
     if (== l nil)
     {nil}
+    {last l}
 })
 
 (func {block body} {
@@ -55,6 +56,10 @@
     eval (head l)
 })
 
+(func {second l} {
+    eval (head (tail l))
+})
+
 (func {nth n l} {
     if (! n)
     {first l}
@@ -62,9 +67,31 @@
 })
 
 (func {len l} {
-  if (== l {})
-    {0}
-    {+ 1 (len (tail l))}
+    reduce (\ {_ s} { (+ s 1) }) l 0
+})
+
+(func {in x l} {
+    if (! l)
+    {false}
+    {
+        if (== (first l) l) 
+        {true}
+        {in x (tail l)}
+    }
+})
+
+(func {idx x l} {do 
+    (:= {_idx} (\ {x i l} {
+        if (! l)
+        {-1}
+        { 
+            if (== x (first l)) 
+            {i}
+            {_idx x (+ i 1) (tail l)}
+        }
+    }))
+   
+    (_idx x 0 l)
 })
 
 (func {last l} {
@@ -85,16 +112,6 @@
 
 (func {split n l} {
     list (take n l) (drop n l)
-})
-
-(func {in x l} {
-    if (! l)
-    {false}
-    {
-        if (== (first l) l) 
-        {true}
-        {in x (tail l)}
-    }
 })
 
 # logic related 

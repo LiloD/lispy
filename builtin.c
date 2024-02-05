@@ -259,7 +259,6 @@ lval *builtin_load(lenv *e, lval *v) {
 
   mpc_result_t r;
 
-  // printf("load `%s`", v->cell[0]->str);
   if (mpc_parse_contents(v->cell[0]->str, Lispy, &r)) {
     // mpc_ast_print(r.output);
     lval *expr = lval_read(r.output);

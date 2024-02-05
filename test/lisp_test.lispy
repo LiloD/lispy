@@ -3,6 +3,12 @@
 (global {l} {1 2 3 4}) 
 
 (test "test list op len, first, nth, last" {
+    (expect (len {}) 0)
+    
+    (expect (len nil) 0)
+
+    (expect (len {1 2}) 2)
+    
     (expect (len l) 4)
 
     (expect (first l) 1)
@@ -18,7 +24,7 @@
     (expect (last l) 4)
 })
 
-(test "test list op take, drop, split, in" {
+(test "test list op take, drop, split" {
     (expect (take 0 l) nil)
     
     (expect (take 1 l) {1})
@@ -33,7 +39,42 @@
     
     (expect (split 2 l) {{1 2} {3 4}})
     
-    (expect (in 0 l) true)
+    (expect (in 0 l) false)
 
     (expect (in 10 l) false)
+    
+    (expect (in 3 l) false)
 })
+
+(test "test list op in, idx" {
+    (expect (in 0 l) false)
+
+    (expect (in 10 l) false)
+    
+    (expect (in 3 l) false)
+    
+    (expect (idx 0 l) -1)
+
+    (expect (idx 1 l) 0)
+    
+    (expect (idx 2 l) 1)
+})
+
+(test "test list mix of things" {
+    (:= {l} {1 2 3 "foo" 4 5 6})
+
+    (expect (len l) 7)
+
+    (:= {x} (idx "foo" l)) 
+
+    (expect x 3)
+    
+    (expect (nth 3 l) "foo")
+    
+    (:= {s} (split x l))
+
+    (expect (first s) {1 2 3})
+    
+    (expect (second s) {"foo" 4 5 6})
+})
+
